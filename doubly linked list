@@ -1,0 +1,381 @@
+#include <stdio.h>
+#include "song.h"
+
+
+/** helper function for removing remaining chars 
+ * after an input is read (useful for read strings
+ * and ignore end of lines) */
+ void clearLine(){
+ 	char k;
+ 	while(scanf("%c", &k) && k != '\n'){}
+ }
+
+
+/** Show user the menu and execute their option */
+void menu(){
+	// Variables definitions 
+	Playlist *playlist = newPlaylist();
+	Song *song;
+	char title[100], artist[100];
+	int year, runtime;
+	char option;
+
+	// Main menu loop
+	while(1 == 1){
+		// show the menu
+		printf("\n\t=================== Main Menu ===================");
+		printf("\n\t1) Add an MP3 to the list.");
+		printf("\n\t2) Delete an MP3 to the list.");
+		printf("\n\t3) Print the list from the beginning to the end.");
+		printf("\n\t4) Print the list from the end to the beginning.");
+		printf("\n\t5) Exit.");
+		printf("\n\t=================================================");
+		// read an option
+		printf("\n\n\tOption: ");
+		scanf(" %c", &option);
+		clearLine();
+		printf("\n");
+		// continue according to the option
+		switch(option){
+			// Add an mp3 to the list
+			case '1': 
+				printf("Please enter the following information:\n");
+				printf("Artist: ");
+				fgets(artist, sizeof(artist), stdin);
+				artist[strlen(artist)-1] = '\0';
+				printf("Title: ");
+				fgets(title, sizeof(title), stdin);
+				title[strlen(title)-1] = '\0';
+				printf("Year: ");
+				scanf("%d", &year);
+				printf("Run time (seconds): ");
+				scanf("%d", &runtime);
+				song = newSong(artist, title, year, runtime);
+				addSongToPlaylist(playlist, song);
+				break;
+
+			// Delete an mp3 from the list
+			case '2': 
+				printf("Which artist do you want to remove their songs?\n");
+				printf("Artist: ");
+				fgets(artist, sizeof(artist), stdin);
+				artist[strlen(artist)-1] = '\0';
+				removeArtistSongs(playlist, artist);
+				printf("All songs from %s successfully deleted!\n", artist);
+				break;
+
+			// Print the list in order
+			case '3': 
+				displayPlaylist(playlist);
+				break;
+
+			// Print the list reversed
+			case '4': 
+				displayPlaylistReversed(playlist);
+				break;
+			
+			// exit
+			case '5':
+				clearPlaylist(playlist);
+				free(playlist);
+				return;
+				break;
+
+			// if an invalid option is entered
+			default: 
+				printf("\tInvalid option, please try again!\n");
+				break;
+		}
+	}
+}
+
+
+/** main function */
+int main(){
+	menu();
+	printf("\nThanks for using our app.\n");
+	return 0;
+}                                                                                                                                                                  proj_1a/Makefile                                                                                    0000664 0001750 0001750 00000000516 14121431626 013007  0                                                                                                    ustar   elena                           elena                                                                                                                                                                                                                  # General variables
+EXEC = mp3
+CC = gcc
+CFLAGS = -c -Wall
+
+# when make all, create the executable
+all: $(EXEC)
+
+# executable
+$(EXEC): main.o Song.o
+	$(CC) -o $(EXEC) main.o song.o
+
+# main file
+main.o: main.c
+	$(CC) $(CFLAGS) main.c
+
+# Song module
+Song.o: song.c song.h
+	$(CC) $(CFLAGS) song.c
+
+# clean project
+clean:
+	-rm *.o $(EXEC)
+                                                                                                                                                                                  proj_1a/song.c                                                                                      0000664 0001750 0001750 00000011133 14121431626 012456  0                                                                                                    ustar   elena                           elena                                                                                                                                                                                                                  #include "song.h"
+
+
+/** This function receives a song's data and create a new song. 
+ * Note: It allocates memory for this new song an returns its pointer.
+ * @param artist name
+ * @param title of the song
+ * @param year when song was published
+ * @param runtime in seconds of the song
+ * @return the pointer of the new song created
+ * */
+Song* newSong(char* artist, char* title, int year, int runtime){
+	// Instancing a song
+	Song *song = (Song*) malloc(sizeof(Song));
+	// allocating space for strings
+	song->artist = (char*) malloc(sizeof(char) * strlen(artist) + 1);
+	song->title = (char*) malloc(sizeof(char) * strlen(title) + 1);
+	// copying strings values
+	strcpy(song->artist, artist);
+	strcpy(song->title, title);
+	// copying the rest of values
+	song->year = year;
+	song->runtime = runtime;
+	// setting prev and next pointers to null
+	song->prev = NULL;
+	song->next = NULL;
+	// returning the new song
+	return song;
+}
+
+
+/** This function prints all data from a song.
+ * @param song to be displayed
+ *  */
+void printSong(Song* song){
+	printf("Artist: %s\n", song->artist);
+	printf("Title: %s\n", song->title);
+	printf("Year: %d\n", song->year);
+	printf("Run Time: %d seconds\n", song->runtime);
+}
+
+
+/** This function creates a new playlist and return its pointer.
+ * Note: It allocates dynamic memory for the playlist. 
+ * @return playlist pointer
+ * */
+Playlist* newPlaylist(){
+	// Instancing a playlist
+	Playlist *playlist = (Playlist*) malloc(sizeof(Playlist));
+	// setting default values
+	playlist->size = 0;
+	playlist->head = NULL;
+	playlist->tail = NULL;
+	// returning the playlist pointer
+	return playlist;
+}
+
+
+/** This function adds a song to a certain playlist. 
+ * @param playlist (reference) where we want to insert the song
+ * @param song (reference) to be inserted in the playlist
+ * */
+void addSongToPlaylist(Playlist* playlist, Song* song){
+	// insert the first element
+	if(playlist->head == NULL){
+		playlist->head = song;
+		playlist->tail = song;
+	}
+	// insert after last element
+	else{
+		playlist->tail->next = song;
+		song->prev = playlist->tail;
+		playlist->tail = playlist->tail->next;
+	}
+	playlist->size++;
+}
+
+
+/** This function removes all songs of a certain artist 
+ * from a certain playlist.
+ * Note: We free dynamic memory here.
+ * @param playlist (reference) where we will search the songs.
+ * @param artist for deleating all their songs
+ * */
+void removeArtistSongs(Playlist* playlist, char *artist){
+	Song* currSong = playlist->head;
+	Song* deleted;
+	// search for all artist's songs
+	while(currSong != NULL){
+		if(strcmp(currSong->artist, artist) == 0){
+			deleted = currSong;
+			// in case the current node is the head
+			if(currSong == playlist->head){
+				playlist->head = playlist->head->next;
+			}
+			// in case the current node is the tail
+			if(currSong == playlist->tail){
+				playlist->tail = playlist->tail->prev;
+			}
+			// delete the current node
+			if(currSong->prev != NULL)
+				currSong->prev->next = currSong->next;
+
+			if(currSong->next != NULL)
+				currSong->next->prev = currSong->prev;
+			
+			currSong = currSong->next;
+
+			free(deleted->artist);
+			free(deleted->title);
+			free(deleted);
+			
+			// decreasing size
+			playlist->size--;
+		}
+		else{
+			currSong = currSong->next;
+		}
+	}
+}
+
+
+/** This function prints all songs from a playlist.
+ * The list is traversed from beginning to the end. 
+ * @param playlist to be displayed
+ * */
+void displayPlaylist(Playlist* playlist){
+	Song* currSong = playlist->head;
+	printf("*************** Playlist ***************\n");
+	printf("                %d songs\n", playlist->size);
+	printf("****************************************\n");
+	while(currSong != NULL){
+		printSong(currSong);
+		printf("------------------------------------\n");
+		currSong = currSong->next;
+	}
+	printf("\n");
+}
+
+
+/** This function prints all songs from a playlist.
+ * The list is traversed from end to the beginning. 
+ * @param playlist to be displayed
+ * */
+void displayPlaylistReversed(Playlist* playlist){
+	Song* currSong = playlist->tail;
+	printf("*********** Reversed Playlist ***********\n");
+	printf("                %d songs\n", playlist->size);
+	printf("****************************************\n");
+	while(currSong != NULL){
+		printSong(currSong);
+		printf("------------------------------------\n");
+		currSong = currSong->prev;
+	}
+	printf("\n");
+}
+
+
+/** This function clears all songs from a certain playlist.
+ * Note: It free all spaces of the songs.
+ * */
+void clearPlaylist(Playlist* playlist){
+	Song* currSong = playlist->head;
+	Song* deleted;
+	while(currSong != NULL){
+		deleted = currSong;
+		currSong = currSong->next;
+		free(deleted->artist);
+		free(deleted->title);
+		free(deleted);
+		playlist->size--;
+	}
+}                                                                                                                                                                                                                                                                                                                                                                                                                                     proj_1a/song.h                                                                                      0000664 0001750 0001750 00000004162 14121431626 012467  0                                                                                                    ustar   elena                           elena                                                                                                                                                                                                                  #ifndef SONG_H
+#define SONG_H
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+/** Song definition */
+struct Song{
+	char* artist;
+	char* title;
+	int year;
+	int runtime;
+	struct Song* prev;
+	struct Song* next;
+};
+
+/** Playlist definition */
+struct Playlist{
+	int size;
+	struct Song* head;
+	struct Song* tail;
+};
+
+typedef struct Song Song;
+typedef struct Playlist Playlist;
+
+
+/** This function receives a song's data and create a new song. 
+ * Note: It allocates memory for this new song an returns its pointer.
+ * @param artist name
+ * @param title of the song
+ * @param year when song was published
+ * @param runtime in seconds of the song
+ * @return the pointer of the new song created
+ * */
+Song* newSong(char* artist, char* title, int year, int runtime);
+
+
+/** This function prints all data from a song.
+ * @param song to be displayed
+ *  */
+void printSong(Song* song);
+
+
+/** This function creates a new playlist and return its pointer.
+ * Note: It allocates dynamic memory for the playlist. 
+ * @return playlist pointer
+ * */
+Playlist* newPlaylist();
+
+
+/** This function adds a song to a certain playlist. 
+ * @param playlist (reference) where we want to insert the song
+ * @param song (reference) to be inserted in the playlist
+ * */
+void addSongToPlaylist(Playlist* playlist, Song* song);
+
+
+/** This function removes all songs of a certain artist 
+ * from a certain playlist.
+ * Note: We free dynamic memory here.
+ * @param playlist (reference) where we will search the songs.
+ * @param artist for deleating all their songs
+ * */
+void removeArtistSongs(Playlist* playlist, char* artist);
+
+
+/** This function prints all songs from a playlist.
+ * The list is traversed from beginning to the end. 
+ * @param playlist to be displayed
+ * */
+void displayPlaylist(Playlist* playlist);
+
+
+/** This function prints all songs from a playlist.
+ * The list is traversed from end to the beginning. 
+ * @param playlist to be displayed
+ * */
+void displayPlaylistReversed(Playlist* playlist);
+
+
+/** This function clears all songs from a certain playlist.
+ * Note: It free all spaces of the songs.
+ * */
+void clearPlaylist(Playlist* playlist);
+
+
+#endif // SONG_H      
