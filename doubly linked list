@@ -95,8 +95,7 @@ int main(){
 	menu();
 	printf("\nThanks for using our app.\n");
 	return 0;
-}                                                                                                                                                                  proj_1a/Makefile                                                                                    0000664 0001750 0001750 00000000516 14121431626 013007  0                                                                                                    ustar   elena                           elena                                                                                                                                                                                                                  # General variables
-EXEC = mp3
+}                                                                                                                                                                                                                                                                     
 CC = gcc
 CFLAGS = -c -Wall
 
@@ -118,8 +117,7 @@ Song.o: song.c song.h
 # clean project
 clean:
 	-rm *.o $(EXEC)
-                                                                                                                                                                                  proj_1a/song.c                                                                                      0000664 0001750 0001750 00000011133 14121431626 012456  0                                                                                                    ustar   elena                           elena                                                                                                                                                                                                                  #include "song.h"
-
+                                                                                                                                                                                 
 
 /** This function receives a song's data and create a new song. 
  * Note: It allocates memory for this new song an returns its pointer.
@@ -290,7 +288,7 @@ void clearPlaylist(Playlist* playlist){
 		free(deleted);
 		playlist->size--;
 	}
-}                                                                                                                                                                                                                                                                                                                                                                                                                                     proj_1a/song.h                                                                                      0000664 0001750 0001750 00000004162 14121431626 012467  0                                                                                                    ustar   elena                           elena                                                                                                                                                                                                                  #ifndef SONG_H
+}                                                                                                                                                                                                                                                                                                                                                                                               
 #define SONG_H
 
 #include <stdio.h>
